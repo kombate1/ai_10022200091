@@ -4,7 +4,9 @@ import os
 from openai import OpenAI
 
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+import streamlit as st
+
+api_key = st.secrets["HF_TOKEN"]
 HF_MODEL = "zai-org/GLM-5.1:together"
 
 def _get_client():
