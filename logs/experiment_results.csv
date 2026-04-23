@@ -1,0 +1,9 @@
+query,top_chunk_id,top_similarity,top_hybrid,answer_preview,baseline_preview
+What are key spending priorities in Ghana's 2025 budget?,ghana_budget_pdf::char600_overlap120::281,0.1958046406507492,0.38164371252059937,"LLM output unavailable: OPENAI_API_KEY is not set.
+This is a dry-run response. Retrieval and prompt stages still executed.",Baseline unavailable: set OPENAI_API_KEY to run pure-LLM comparison.
+Who won most votes in the election dataset and where?,ghana_budget_pdf::char600_overlap120::1457,0.33207449316978455,0.3323262612024943,"LLM output unavailable: OPENAI_API_KEY is not set.
+This is a dry-run response. Retrieval and prompt stages still executed.",Baseline unavailable: set OPENAI_API_KEY to run pure-LLM comparison.
+How does the budget discuss inflation and debt?,ghana_budget_pdf::char600_overlap120::282,0.18295088410377502,0.27136070728302,"LLM output unavailable: OPENAI_API_KEY is not set.
+This is a dry-run response. Retrieval and prompt stages still executed.",Baseline unavailable: set OPENAI_API_KEY to run pure-LLM comparison.
+Tell me the exact 2026 budget numbers.,ghana_budget_pdf::char600_overlap120::284,0.3071356415748596,0.21237517992655439,"LLM output unavailable: OPENAI_API_KEY is not set.
+This is a dry-run response. Retrieval and prompt stages still executed.",Baseline unavailable: set OPENAI_API_KEY to run pure-LLM comparison.
