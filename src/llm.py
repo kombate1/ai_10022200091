@@ -6,6 +6,8 @@ from openai import OpenAI
 
 import streamlit as st
 
+HF_TOKEN = os.getenv("HF_TOKEN") 
+
 api_key = st.secrets["HF_TOKEN"]
 HF_MODEL = "zai-org/GLM-5.1:together"
 
