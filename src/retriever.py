@@ -49,14 +49,21 @@ class HybridRetriever:
         self.embedding = embedding
         self.store = store
 
-    def retrieve(self, query: str, top_k: int = 5, alpha: float = 0.8) -> list[dict]:
-        expanded = expand_query(query)
+    def retrieve(
+        self,
+        query: str,
+        top_k: int = 5,
+        alpha: float = 0.8,
+        use_query_expansion: bool = True,
+        use_year_alignment: bool = True,
+    ) -> list[dict]:
+        expanded = expand_query(query) if use_query_expansion else query
         q_vec = self.embedding.embed_query(expanded)
         dense_results = self.store.search(q_vec, top_k=max(top_k * 3, 10))
 
         for row in dense_results:
             ks = keyword_score(query, row["text"])
-            ys = year_alignment_score(query, row["text"])
+            ys = year_alignment_score(query, row["text"]) if use_year_alignment else 0.0
             row["keyword_score"] = ks
             row["year_score"] = ys
             row["hybrid_score"] = alpha * row["similarity"] + (1 - alpha) * ks + ys

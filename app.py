@@ -49,6 +49,16 @@ def _current_messages() -> list[dict]:
     return st.session_state.chats[st.session_state.current_chat_id]["messages"]
 
 with st.sidebar:
+    if "show_settings" not in st.session_state:
+        st.session_state.show_settings = False
+
+    header_left, header_right = st.columns([3, 1])
+    with header_left:
+        st.subheader("Chats")
+    with header_right:
+        if st.button("Settings", use_container_width=True):
+            st.session_state.show_settings = not st.session_state.show_settings
+
     st.subheader("Chat history")
 
     chat_ids = list(st.session_state.chats.keys())
@@ -70,14 +80,42 @@ with st.sidebar:
         st.session_state.current_chat_id = new_id
 
     st.divider()
+    show_details = st.checkbox("Show answer details (chunks, scores, prompts)", value=True)
+
+    # Settings are hidden unless the user explicitly opens them.
+    if st.session_state.show_settings:
+        st.subheader("RAG Settings")
+        top_k = st.slider("Top-k retrieved chunks", min_value=1, max_value=12, value=5, step=1)
+        alpha = st.slider(
+            "Hybrid weight (alpha for dense similarity)",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.8,
+            step=0.05,
+        )
+        use_query_expansion = st.checkbox("Use query expansion", value=True)
+        use_year_alignment = st.checkbox("Use year-alignment fix", value=True)
+        max_context_chars = st.slider("Max context characters", min_value=500, max_value=6000, value=3500, step=250)
+        prompt_variant = st.selectbox(
+            "Prompt variant",
+            options=["grounded", "quote_first", "strict_refusal"],
+            index=0,
+        )
+        include_baseline = st.checkbox("Show pure LLM baseline", value=True)
+    else:
+        # Defaults used when settings are hidden.
+        top_k = 5
+        alpha = 0.8
+        use_query_expansion = True
+        use_year_alignment = True
+        max_context_chars = 3500
+        prompt_variant = "grounded"
+        include_baseline = True
+
+    st.divider()
     st.subheader("How to run")
     st.code("python -m scripts.build_index\nstreamlit run app.py")
-    st.markdown(
-        "- No LangChain/LlamaIndex used\n"
-        "- Embeddings: custom TF-IDF pipeline\n"
-        "- Vector store: custom NumPy cosine search\n"
-        "- Retrieval extension: query expansion + hybrid scoring"
-    )
+    
 
 
 query = st.chat_input("Ask about Ghana election results or the 2025 budget statement...")
@@ -85,7 +123,16 @@ if query:
     msgs = _current_messages()
     msgs.append({"role": "user", "content": query})
     with st.spinner("Retrieving and generating..."):
-        result = get_pipeline().ask(query)
+        result = get_pipeline().ask(
+            query,
+            top_k=top_k,
+            alpha=alpha,
+            use_query_expansion=use_query_expansion,
+            use_year_alignment=use_year_alignment,
+            prompt_variant=prompt_variant,
+            max_context_chars=max_context_chars,
+            include_baseline=include_baseline,
+        )
     # Store full retrieval context inside the chat turn for later review.
     msgs.append({"role": "assistant", "content": result["answer"], "result": result})
 
@@ -94,15 +141,20 @@ for msg in _current_messages():
         st.markdown(msg["content"])
         if msg["role"] == "assistant" and "result" in msg:
             res = msg["result"]
-            with st.expander("Retrieved Chunks + Similarity Scores", expanded=False):
-                for i, r in enumerate(res["retrieved"], start=1):
-                    st.markdown(
-                        f"**{i}.** `{r['chunk_id']}` | sim={r['similarity']:.4f} | "
-                        f"hybrid={r['hybrid_score']:.4f} | keyword={r['keyword_score']:.4f}"
-                    )
-                    st.write(r["text"][:500] + ("..." if len(r["text"]) > 500 else ""))
-                    st.divider()
-            with st.expander("Final Prompt Sent to LLM", expanded=False):
-                st.code(res["prompt"])
-            with st.expander("Pure LLM Baseline (No Retrieval)", expanded=False):
-                st.write(res["baseline_answer"])
+            if show_details:
+                if "settings" in res:
+                    with st.expander("Run Settings", expanded=False):
+                        st.json(res["settings"])
+                with st.expander("Retrieved Chunks + Similarity Scores", expanded=False):
+                    for i, r in enumerate(res["retrieved"], start=1):
+                        st.markdown(
+                            f"**{i}.** `{r['chunk_id']}` | sim={r['similarity']:.4f} | "
+                            f"hybrid={r['hybrid_score']:.4f} | keyword={r['keyword_score']:.4f}"
+                        )
+                        st.write(r["text"][:500] + ("..." if len(r["text"]) > 500 else ""))
+                        st.divider()
+                with st.expander("Final Prompt Sent to LLM", expanded=False):
+                    st.code(res["prompt"])
+                if res.get("baseline_answer"):
+                    with st.expander("Pure LLM Baseline (No Retrieval)", expanded=False):
+                        st.write(res["baseline_answer"])

@@ -16,16 +16,42 @@ class RagPipeline:
         self.retriever = retriever
         self.log_file = log_file or LOG_DIR / "pipeline_logs.jsonl"
 
-    def ask(self, query: str) -> dict:
-        retrieved = self.retriever.retrieve(query, top_k=TOP_K)
-        prompt = build_prompt(query, retrieved)
+    def ask(
+        self,
+        query: str,
+        *,
+        top_k: int = TOP_K,
+        alpha: float = 0.8,
+        use_query_expansion: bool = True,
+        use_year_alignment: bool = True,
+        prompt_variant: str = "grounded",
+        max_context_chars: int = 3500,
+        include_baseline: bool = True,
+    ) -> dict:
+        retrieved = self.retriever.retrieve(
+            query,
+            top_k=top_k,
+            alpha=alpha,
+            use_query_expansion=use_query_expansion,
+            use_year_alignment=use_year_alignment,
+        )
+        prompt = build_prompt(query, retrieved, max_context_chars=max_context_chars, prompt_variant=prompt_variant)
         answer = generate_with_llm(prompt)
-        baseline = generate_without_rag(query)
+        baseline = generate_without_rag(query) if include_baseline else ""
 
         payload = {
             "timestamp": datetime.utcnow().isoformat(),
             "query": query,
             "retrieved": retrieved,
+            "settings": {
+                "top_k": top_k,
+                "alpha": alpha,
+                "use_query_expansion": use_query_expansion,
+                "use_year_alignment": use_year_alignment,
+                "prompt_variant": prompt_variant,
+                "max_context_chars": max_context_chars,
+                "include_baseline": include_baseline,
+            },
             "prompt": prompt,
             "answer": answer,
             "baseline_answer": baseline,
