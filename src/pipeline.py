@@ -27,6 +27,7 @@ class RagPipeline:
         prompt_variant: str = "grounded",
         max_context_chars: int = 3500,
         include_baseline: bool = True,
+        **_unused_kwargs: object,
     ) -> dict:
         retrieved = self.retriever.retrieve(
             query,

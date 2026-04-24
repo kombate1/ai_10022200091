@@ -43,8 +43,7 @@ def build_context(chunks: Sequence[dict], max_chars: int = 3500) -> str:
 
 
 def build_prompt(
-    user_query: str,
-    chunks: Sequence[dict],
+    user_query: str,    chunks: Sequence[dict],
     *,
     max_context_chars: int = 3500,
     prompt_variant: str = "grounded",
