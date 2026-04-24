@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import os
+
 from openai import OpenAI
 import streamlit as st
 
-HF_MODEL = "zai-org/GLM-5.1:together"
+HF_MODEL = "deepseek-ai/DeepSeek-R1:novita"
 
 def _get_client():
-    hf_token = st.secrets["HF_TOKEN"]
+    # Prefer environment variable (matches HuggingFace Router quickstart).
+    # This will raise KeyError if not provided, which we convert to a clearer message.
+    try:
+        hf_token = os.environ["HF_TOKEN"]
+    except KeyError as e:
+        raise ValueError("HF_TOKEN environment variable is not set.") from e
     return OpenAI(
         base_url="https://router.huggingface.co/v1",
         api_key=hf_token,
